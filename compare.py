@@ -4,46 +4,55 @@ from openpyxl.styles import PatternFill, Font, Border, Side
 dict1 = {}
 dict2 = {}
 
+wb1_list = []
+wb2_list = []
+
 border = Border(left=Side(border_style='thin',color='000000'),
 right=Side(border_style='thin',color='000000'),
 top=Side(border_style='thin',color='000000'),
 bottom=Side(border_style='thin',color='000000'))
 
-def compare(wb1_excel, wb2_excel):
-    wb1 = load_workbook(wb1_excel, read_only = False)
-    wb2 = load_workbook(wb2_excel, read_only = False)
+def compare(wb1_list, wb2_list):    
+    wb1_list = remove_whitespace_from_list(wb1_list)
+    wb2_list = remove_whitespace_from_list(wb2_list)
     
-    for xlsx in range(2):      
-        if xlsx == 0:
-            get_excel =  wb1
-            wb_excel = wb1_excel
-        else:
-            get_excel =  wb2
-            wb_excel = wb2_excel
-            
-        for sheet in range(len(get_excel.sheetnames)):
-            work1 = wb1[wb1.sheetnames[sheet]]
-            work2 = wb2[wb2.sheetnames[sheet]]
-            
-            make_dict(work1, work2)
-
+    # print(wb1_list)
+    # print(wb2_list)
+    for q in range(len(wb1_list)):
+        wb1 = load_workbook(wb1_list[q], read_only = False)
+        wb2 = load_workbook(wb2_list[q], read_only = False)
+    
+        for xlsx in range(2):      
             if xlsx == 0:
-                compare_a_to_b(work1)
+                get_excel =  wb1
+                wb_excel = wb1_list[q]
             else:
-                compare_b_to_a(work2)  
-                
-            get_excel.save(f'maker_color_{wb_excel}')
-            get_excel.close()
-            dict1.clear()
-            dict2.clear() 
+                get_excel =  wb2
+                wb_excel = wb2_list[q]
+
+            for sheet in range(len(get_excel.sheetnames)):
+                work1 = wb1[wb1.sheetnames[sheet]]
+                work2 = wb2[wb2.sheetnames[sheet]]
+
+                make_dict(work1, work2)
+
+                if xlsx == 0:
+                    compare_a_to_b(work1, q)
+                else:
+                    compare_b_to_a(work2, q)  
+
+                get_excel.save(f'maker_color_{wb_excel}')
+                get_excel.close()
+                dict1.clear()
+                dict2.clear() 
 
 wb1_count = []
-def compare_a_to_b(work1):
+def compare_a_to_b(work1, q):
     k = 1
     for key in dict1:
         for i in range(1, work1.max_row):
-            if dict1[key][i-1] is not None and dict1[key][i-1] not in dict2.get(key):
-                # print(k, i, key, dict1[key][i-1])
+            # print(k, i, key, dict1[key][i-1])
+            if dict1[key][i-1] is None and dict1[key][i-1] not in dict2.get(key):
                 if key == 'Updated':
                     work1.cell(i+1 , k).font = Font(color="e06666")
                 else:
@@ -59,16 +68,16 @@ def compare_a_to_b(work1):
     work1.cell(row=1, column=work1.max_column, value = 'Deleted').font  = Font(bold=True)
     work1.cell(row=2, column=work1.max_column, value = len(wb1_count)).font = Font(bold=True, color="e06666", size=15)
     work1.cell(row=2, column=work1.max_column+1, value = result_string)
-    print(f'Finished comparing the {work1} in {wb1_excel}, total {len(wb1_count)} items deleted.')
+    print(f'Finished comparing the {work1} in {wb1_list[q]}, total {len(wb1_count)} items deleted.')
     wb1_count.clear()
         
 wb2_count = []        
-def compare_b_to_a(work2):
+def compare_b_to_a(work2, q):
     k = 1
     for key in dict2:
         for i in range(1, work2.max_row):
+            # print(k, i, key, dict2[key][i-1])
             if dict2[key][i-1] is not None and dict2[key][i-1] not in dict1.get(key):
-                # print(k, i, key, dict1[key][i-1])
                 if key == 'Updated':
                     work2.cell(i+1 , k).font = Font(color="a9d796")
                 else:
@@ -84,7 +93,7 @@ def compare_b_to_a(work2):
     work2.cell(row=1, column=work2.max_column, value = 'Added').font  = Font(bold=True)
     work2.cell(row=2, column=work2.max_column, value = len(wb2_count)).font = Font(bold=True, color="e06666", size=15)
     work2.cell(row=2, column=work2.max_column+1, value = result_string)
-    print(f'Finished comparing the {work2} in {wb2_excel}, total {len(wb2_count)} items added.')
+    print(f'Finished comparing the {work2} in {wb2_list[q]}, total {len(wb2_count)} items added.')
     wb2_count.clear()
     
 def make_dict(work1, work2):
@@ -94,6 +103,7 @@ def make_dict(work1, work2):
         for c in range(2, work1.max_row+1):
             value = work1.cell(c, r).value
             dict1[key].append(value)
+    
     # print(dict1)
     
     for r in range(1, work2.max_column+1):
@@ -102,14 +112,18 @@ def make_dict(work1, work2):
         for c in range(2, work2.max_row+1):
             value = work2.cell(c, r).value
             dict2[key].append(value)
+            
     # print(dict2)
     
-
-
+def remove_whitespace_from_list(input_list):
+    return [item for item in input_list if item.strip()]
+    
 if __name__ == "__main__":
     while True:
         wb1_excel=input('Please input the first.xlsx file. Press Enter if you do not wish to continue the comparison: ')
+        wb1_list.append(wb1_excel)
         wb2_excel=input('Please input the second.xlsx file. Press Enter if you do not wish to continue the comparison: : ')
+        wb2_list.append(wb2_excel)
         if wb1_excel == '' and wb2_excel == '':
             break
-    compare(wb1_excel, wb2_excel)
+    compare(wb1_list, wb2_list)
