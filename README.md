@@ -1,8 +1,8 @@
 ># Windows
 
 ## Description
-Use **slelenium** to crawl web data and use **pandas** to organize it into `excel`
-Use **openpyxl** to compare different `excel`
+- Use **slelenium** to crawl web data and use **pandas** to organize it into `excel`
+- Use **openpyxl** to compare different `excel`
 
 ## Install
 
